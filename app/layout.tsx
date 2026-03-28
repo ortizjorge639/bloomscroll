@@ -54,7 +54,7 @@ export default function RootLayout({
       <head>
         <ThemeInitScript />
       </head>
-      <body className="font-sans antialiased overflow-hidden">
+      <body className={`${GeistSans.className} antialiased overflow-hidden`}>
         <ThemeProvider>
           {children}
           <Toaster
