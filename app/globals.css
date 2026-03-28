@@ -200,11 +200,6 @@
     @apply bg-background text-foreground;
   }
   
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-  
   /* Custom scrollbar for dark theme */
   ::-webkit-scrollbar {
     width: 8px;
@@ -237,7 +232,6 @@
   /* Snap scrolling for feed */
   .snap-feed {
     scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
   }
   
   .snap-card {
