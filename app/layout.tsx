@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/lib/context/theme-context'
+import { ThemeInitScript } from '@/components/theme-init-script'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -44,20 +46,24 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        <ThemeInitScript />
+      </head>
       <body className="font-sans antialiased overflow-hidden">
-        {children}
-        <Toaster 
-          position="bottom-center" 
-          theme="dark"
-          toastOptions={{
-            style: {
-              background: 'var(--card)',
-              border: '1px solid var(--border)',
-              color: 'var(--foreground)',
-            },
-          }}
-        />
+        <ThemeProvider>
+          {children}
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                color: 'var(--foreground)',
+              },
+            }}
+          />
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

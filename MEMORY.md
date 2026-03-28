@@ -85,8 +85,7 @@ BloomScroll is a TikTok-style infinite scroll knowledge feed for X/Twitter bookm
 1. **Onboarding**: No first-run experience explaining the app
 2. **Gestures**: Mobile swipe gestures for archive/tag actions
 3. **Haptic feedback**: No haptic feedback on mobile actions
-4. **Dark/Light toggle**: Light mode is defined but no toggle in UI
-5. **Keyboard shortcuts help**: No visible keyboard shortcuts reference
+4. **Keyboard shortcuts help**: No visible keyboard shortcuts reference
 
 ### Code Quality
 1. **Tests**: No unit or integration tests
@@ -115,8 +114,16 @@ BloomScroll is a TikTok-style infinite scroll knowledge feed for X/Twitter bookm
 - [ ] Bulk selection mode for mass operations
 - [ ] Export to Notion/Obsidian format
 
+### Theme System (Implemented)
+Four themes are live, selectable in Settings > Appearance:
+- **Dark** — Pure black, X/Twitter-blue accent (default)
+- **Light** — Clean white, navy-blue accent
+- **Sunny** — Warm cream `oklch(0.955 0.025 85)` bg, deep forest green `oklch(0.22 0.08 145)` text; warm ambient top wash via `body::before`
+- **Moonshine** — Deep midnight navy `oklch(0.095 0.038 255)` bg, silver-blue `oklch(0.88 0.045 220)` text; radial lunar-ray glow via `body::before`
+
+Theme persisted to `localStorage` key `bloomscroll-theme`. Applied before first paint via inline `<ThemeInitScript>` (avoids FOUC). Managed by `ThemeProvider` in `/lib/context/theme-context.tsx`.
+
 ### Priority 4: Polish
-- [ ] Light/Dark mode toggle
 - [ ] Haptic feedback on iOS
 - [ ] PWA manifest for installability
 - [ ] Offline indicator

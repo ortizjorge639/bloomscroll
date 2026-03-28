@@ -21,7 +21,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Sparkles,
+  Palette,
 } from 'lucide-react'
+import { ThemeSelector } from '@/components/theme-selector'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { TagColor, TAG_COLORS } from '@/types'
@@ -167,6 +169,15 @@ export default function SettingsPage() {
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-6">
+          {/* Theme */}
+          <Card className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Palette className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-semibold">Appearance</h2>
+            </div>
+            <ThemeSelector />
+          </Card>
+
           {/* Stats */}
           <Card className="p-6">
             <h2 className="mb-4 text-lg font-semibold">Your Library</h2>
