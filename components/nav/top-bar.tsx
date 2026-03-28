@@ -2,8 +2,8 @@
 
 import { useData } from '@/lib/context/data-context'
 import { cn } from '@/lib/utils'
-import { X, Plus, Tag as TagIcon } from 'lucide-react'
-import { useState } from 'react'
+import { X, Plus, Tag as TagIcon, Search, SortAsc, SortDesc } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Popover,
   PopoverContent,
@@ -39,18 +39,61 @@ interface TopBarProps {
   title?: string
   showFilters?: boolean
   showCount?: boolean
+  showSearch?: boolean
+  showSort?: boolean
 }
 
 export function TopBar({
   title,
   showFilters = true,
   showCount = true,
+  showSearch = true,
+  showSort = true,
 }: TopBarProps) {
-  const { tags, activeTagFilters, setActiveTagFilters, filteredBookmarks, createTag } =
-    useData()
+  const {
+    tags,
+    activeTagFilters,
+    setActiveTagFilters,
+    filteredBookmarks,
+    createTag,
+    searchQuery,
+    setSearchQuery,
+    sortOrder,
+    setSortOrder,
+  } = useData()
   const [isCreating, setIsCreating] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState<TagColor>('blue')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchOpen])
+
+  // Keyboard shortcuts: / to open search, Escape to close
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (
+        e.key === '/' &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement) &&
+        showSearch
+      ) {
+        e.preventDefault()
+        setIsSearchOpen(true)
+      }
+      if (e.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false)
+        setSearchQuery('')
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [isSearchOpen, setSearchQuery, showSearch])
 
   const toggleTag = (tagId: string) => {
     if (activeTagFilters.includes(tagId)) {
@@ -75,6 +118,39 @@ export function TopBar({
     }
   }
 
+  // ── Search mode ────────────────────────────────────────────────────────────
+  if (isSearchOpen) {
+    return (
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-3 md:px-4">
+        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <input
+          ref={searchInputRef}
+          type="text"
+          placeholder="Search bookmarks… (Esc to close)"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        />
+        {searchQuery && (
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {filteredBookmarks.length} result{filteredBookmarks.length !== 1 ? 's' : ''}
+          </span>
+        )}
+        <button
+          onClick={() => {
+            setIsSearchOpen(false)
+            setSearchQuery('')
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Close search"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </header>
+    )
+  }
+
+  // ── Normal mode ────────────────────────────────────────────────────────────
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-3 md:gap-4 md:px-4">
       {/* Title and count */}
@@ -92,7 +168,7 @@ export function TopBar({
       {/* Tag filters */}
       {showFilters && (
         <div className="flex flex-1 items-center gap-1.5 overflow-x-auto px-1 hide-scrollbar md:gap-2 md:px-2">
-          {/* Active filter indicator */}
+          {/* Active filter clear button */}
           {activeTagFilters.length > 0 && (
             <button
               onClick={clearFilters}
@@ -117,12 +193,7 @@ export function TopBar({
                     : 'border-border bg-secondary text-secondary-foreground hover:bg-accent'
                 )}
               >
-                <span
-                  className={cn(
-                    'h-2 w-2 rounded-full',
-                    tagDotClasses[tag.color]
-                  )}
-                />
+                <span className={cn('h-2 w-2 rounded-full', tagDotClasses[tag.color])} />
                 {tag.name}
               </button>
             )
@@ -166,11 +237,7 @@ export function TopBar({
                     />
                   ))}
                 </div>
-                <Button
-                  size="sm"
-                  onClick={handleCreateTag}
-                  disabled={!newTagName.trim()}
-                >
+                <Button size="sm" onClick={handleCreateTag} disabled={!newTagName.trim()}>
                   Create Tag
                 </Button>
               </div>
@@ -178,6 +245,34 @@ export function TopBar({
           </Popover>
         </div>
       )}
+
+      {/* Right-side actions: search + sort */}
+      <div className="ml-auto flex shrink-0 items-center gap-1">
+        {showSort && (
+          <button
+            onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label={sortOrder === 'newest' ? 'Sort oldest first' : 'Sort newest first'}
+            title={sortOrder === 'newest' ? 'Newest first (click for oldest)' : 'Oldest first (click for newest)'}
+          >
+            {sortOrder === 'newest' ? (
+              <SortDesc className="h-4 w-4" />
+            ) : (
+              <SortAsc className="h-4 w-4" />
+            )}
+          </button>
+        )}
+        {showSearch && (
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Search bookmarks"
+            title="Search bookmarks (/)"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </header>
   )
 }

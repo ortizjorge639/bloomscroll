@@ -1,18 +1,22 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/lib/context/theme-context'
 import { ThemeInitScript } from '@/components/theme-init-script'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
   title: 'BloomScroll',
   description: 'Transform your X bookmarks into a beautiful, TikTok-style knowledge feed',
   generator: 'v0.app',
+  applicationName: 'BloomScroll',
+  appleWebApp: {
+    capable: true,
+    title: 'BloomScroll',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: [
       {
@@ -46,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
         <ThemeInitScript />
       </head>

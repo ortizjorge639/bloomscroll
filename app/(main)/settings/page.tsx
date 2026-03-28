@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { TopBar } from '@/components/nav/top-bar'
 import { useData } from '@/lib/context/data-context'
 import { Button } from '@/components/ui/button'
@@ -22,8 +22,10 @@ import {
   CheckCircle2,
   Sparkles,
   Palette,
+  Twitter,
 } from 'lucide-react'
 import { ThemeSelector } from '@/components/theme-selector'
+import { XConnect } from '@/components/x-connect'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { TagColor, TAG_COLORS } from '@/types'
@@ -198,6 +200,17 @@ export default function SettingsPage() {
                 <span className="text-xs text-muted-foreground">Archived</span>
               </div>
             </div>
+          </Card>
+
+          {/* X Account Integration */}
+          <Card className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Twitter className="h-5 w-5 text-[#1DA1F2]" />
+              <h2 className="text-lg font-semibold">X Account Sync</h2>
+            </div>
+            <Suspense fallback={<Spinner className="h-4 w-4" />}>
+              <XConnect />
+            </Suspense>
           </Card>
 
           {/* Import/Export */}

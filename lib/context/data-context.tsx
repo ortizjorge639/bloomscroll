@@ -14,12 +14,14 @@ import * as tagStorage from '@/lib/storage/tags'
 import { openDB } from '@/lib/db'
 import { MOCK_BOOKMARKS, MOCK_TAGS } from '@/lib/mock-data'
 
+export type SortOrder = 'newest' | 'oldest'
+
 interface DataContextValue {
   // Bookmarks
   bookmarks: Bookmark[]
   archivedBookmarks: Bookmark[]
   isLoading: boolean
-  
+
   // Bookmark actions
   addBookmark: (
     data: Omit<Bookmark, 'id' | 'savedAt' | 'archived' | 'tags'>
@@ -29,18 +31,26 @@ interface DataContextValue {
   deleteBookmark: (id: string) => Promise<void>
   addTagToBookmark: (bookmarkId: string, tagId: string) => Promise<void>
   removeTagFromBookmark: (bookmarkId: string, tagId: string) => Promise<void>
-  
+
   // Tags
   tags: Tag[]
   createTag: (name: string, color?: TagColor) => Promise<Tag>
   updateTag: (id: string, updates: Partial<Omit<Tag, 'id' | 'createdAt'>>) => Promise<void>
   deleteTag: (id: string) => Promise<void>
-  
+
   // Filters
   activeTagFilters: string[]
   setActiveTagFilters: (tagIds: string[]) => void
   filteredBookmarks: Bookmark[]
-  
+
+  // Search
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+
+  // Sort
+  sortOrder: SortOrder
+  setSortOrder: (order: SortOrder) => void
+
   // Refresh
   refreshData: () => Promise<void>
 }
@@ -53,6 +63,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [tags, setTags] = useState<Tag[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTagFilters, setActiveTagFilters] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   
   // Load data from IndexedDB
   const refreshData = useCallback(async () => {
@@ -227,12 +239,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
     )
   }, [])
   
-  // Filtered bookmarks based on active tag filters
-  const filteredBookmarks = activeTagFilters.length > 0
-    ? bookmarks.filter((b) =>
-        activeTagFilters.every((tagId) => b.tags.includes(tagId))
-      )
-    : bookmarks
+  // Apply sort, tag filters, and text search
+  const filteredBookmarks = (() => {
+    // 1. Sort
+    const sorted = [...bookmarks].sort((a, b) =>
+      sortOrder === 'newest' ? b.savedAt - a.savedAt : a.savedAt - b.savedAt
+    )
+
+    // 2. Tag filter (AND logic — must have all selected tags)
+    const tagFiltered =
+      activeTagFilters.length > 0
+        ? sorted.filter((b) => activeTagFilters.every((tagId) => b.tags.includes(tagId)))
+        : sorted
+
+    // 3. Text search (case-insensitive, searches text + author name/handle)
+    if (!searchQuery.trim()) return tagFiltered
+    const q = searchQuery.toLowerCase()
+    return tagFiltered.filter(
+      (b) =>
+        b.text.toLowerCase().includes(q) ||
+        b.author.name.toLowerCase().includes(q) ||
+        b.author.handle.toLowerCase().includes(q) ||
+        b.url.toLowerCase().includes(q)
+    )
+  })()
   
   const value: DataContextValue = {
     bookmarks,
@@ -251,6 +281,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     activeTagFilters,
     setActiveTagFilters,
     filteredBookmarks,
+    searchQuery,
+    setSearchQuery,
+    sortOrder,
+    setSortOrder,
     refreshData,
   }
   
