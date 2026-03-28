@@ -1,5 +1,5 @@
 import { DataProvider } from '@/lib/context/data-context'
-import { SidebarNav } from '@/components/nav/sidebar-nav'
+import { SidebarNav, MobileNav } from '@/components/nav/sidebar-nav'
 
 export default function MainLayout({
   children,
@@ -8,11 +8,12 @@ export default function MainLayout({
 }) {
   return (
     <DataProvider>
-      <div className="flex h-screen w-screen overflow-hidden bg-background">
+      <div className="flex h-[100dvh] w-screen overflow-hidden bg-background">
         <SidebarNav />
-        <main className="flex flex-1 flex-col overflow-hidden">
+        <main className="flex flex-1 flex-col overflow-hidden pb-16 md:pb-0">
           {children}
         </main>
+        <MobileNav />
       </div>
     </DataProvider>
   )

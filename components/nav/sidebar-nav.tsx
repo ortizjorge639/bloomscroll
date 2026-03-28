@@ -45,11 +45,12 @@ const navItems = [
   },
 ]
 
+// Desktop sidebar navigation
 export function SidebarNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex h-full w-16 flex-col items-center gap-1 border-r border-border bg-sidebar py-4">
+    <nav className="hidden h-full w-16 flex-col items-center gap-1 border-r border-border bg-sidebar py-4 md:flex">
       {/* Logo */}
       <Link
         href="/feed"
@@ -79,13 +80,43 @@ export function SidebarNav() {
               <item.icon className="h-5 w-5" />
               
               {/* Tooltip */}
-              <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 shadow-md transition-opacity group-hover:opacity-100 z-50">
                 {item.label}
               </span>
             </Link>
           )
         })}
       </div>
+    </nav>
+  )
+}
+
+// Mobile bottom navigation
+export function MobileNav() {
+  const pathname = usePathname()
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center justify-around border-t border-border bg-sidebar/95 backdrop-blur-sm md:hidden safe-area-bottom">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              'flex flex-col items-center justify-center gap-0.5 px-3 py-2 transition-colors',
+              isActive
+                ? 'text-primary'
+                : 'text-muted-foreground'
+            )}
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
+          >
+            <item.icon className={cn('h-5 w-5', isActive && 'scale-110')} />
+            <span className="text-[10px] font-medium">{item.label}</span>
+          </Link>
+        )
+      })}
     </nav>
   )
 }

@@ -238,4 +238,18 @@
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
+  
+  /* Safe area for mobile devices with notches */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  
+  /* Touch action for better mobile scrolling */
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
 }

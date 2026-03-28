@@ -137,14 +137,14 @@ export function BloomScrollFeed() {
       </div>
 
       {/* Navigation indicators */}
-      <div className="absolute bottom-6 right-6 flex flex-col items-center gap-2">
+      <div className="absolute bottom-20 right-4 flex flex-col items-center gap-2 md:bottom-6 md:right-6">
         {/* Progress */}
-        <div className="rounded-full bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+        <div className="rounded-full bg-card/80 px-2.5 py-1 text-[10px] font-medium text-muted-foreground backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
           {currentIndex + 1} / {filteredBookmarks.length}
         </div>
 
-        {/* Navigation buttons */}
-        <div className="flex flex-col gap-1">
+        {/* Navigation buttons - hidden on mobile, use swipe instead */}
+        <div className="hidden flex-col gap-1 md:flex">
           <button
             onClick={() => scrollToIndex(currentIndex - 1)}
             disabled={currentIndex === 0}

@@ -127,9 +127,9 @@ export function PostCard({
   if (variant === 'feed') {
     return (
       <article className="flex h-full w-full flex-col bg-card snap-card">
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-8 md:px-12 lg:px-20">
+        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 md:px-12 lg:px-20">
           {/* Content */}
-          <div className="flex max-w-2xl flex-col gap-6">
+          <div className="flex w-full max-w-2xl flex-col gap-4 sm:gap-6">
             {/* Author */}
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -156,7 +156,7 @@ export function PostCard({
             </div>
 
             {/* Text content */}
-            <p className="text-lg leading-relaxed text-foreground md:text-xl lg:text-2xl">
+            <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl lg:text-2xl">
               {bookmark.text}
             </p>
 
@@ -196,7 +196,7 @@ export function PostCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-center gap-2 border-t border-border px-6 py-4">
+        <div className="flex items-center justify-center gap-1 border-t border-border px-3 py-3 sm:gap-2 sm:px-6 sm:py-4">
           <Popover open={isTagging} onOpenChange={setIsTagging}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
