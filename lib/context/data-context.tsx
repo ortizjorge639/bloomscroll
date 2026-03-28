@@ -12,6 +12,7 @@ import { Bookmark, Tag, TagColor } from '@/types'
 import * as bookmarkStorage from '@/lib/storage/bookmarks'
 import * as tagStorage from '@/lib/storage/tags'
 import { openDB } from '@/lib/db'
+import { MOCK_BOOKMARKS, MOCK_TAGS } from '@/lib/mock-data'
 
 interface DataContextValue {
   // Bookmarks
@@ -70,11 +71,53 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [])
   
-  // Initialize database and load data
+  // Initialize database and load data (auto-load demo data if empty)
   useEffect(() => {
     async function init() {
       try {
         await openDB()
+        
+        // Check if database is empty
+        const existingBookmarks = await bookmarkStorage.getBookmarks(false)
+        const existingTags = await tagStorage.getTags()
+        
+        // Auto-load demo data if database is empty
+        if (existingBookmarks.length === 0 && existingTags.length === 0) {
+          // Create demo tags first
+          for (const tag of MOCK_TAGS) {
+            await tagStorage.createTag(tag.name, tag.color)
+          }
+          
+          // Then create demo bookmarks with proper IDs
+          const createdTags = await tagStorage.getTags()
+          const tagIdMap: Record<string, string> = {}
+          MOCK_TAGS.forEach((mockTag, index) => {
+            if (createdTags[index]) {
+              tagIdMap[mockTag.id] = createdTags[index].id
+            }
+          })
+          
+          for (const bookmark of MOCK_BOOKMARKS) {
+            const newBookmark = await bookmarkStorage.createBookmark({
+              url: bookmark.url,
+              text: bookmark.text,
+              author: bookmark.author,
+              timestamp: bookmark.timestamp,
+              media: bookmark.media,
+              linkPreview: bookmark.linkPreview,
+              metrics: bookmark.metrics,
+            })
+            
+            // Add mapped tags
+            for (const oldTagId of bookmark.tags) {
+              const newTagId = tagIdMap[oldTagId]
+              if (newTagId) {
+                await bookmarkStorage.addTagToBookmark(newBookmark.id, newTagId)
+              }
+            }
+          }
+        }
+        
         await refreshData()
       } catch (error) {
         console.error('Failed to initialize database:', error)
