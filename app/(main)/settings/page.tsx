@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, Suspense } from 'react'
+import { useState, useRef } from 'react'
 import { TopBar } from '@/components/nav/top-bar'
 import { useData } from '@/lib/context/data-context'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,6 @@ import * as tagStorage from '@/lib/storage/tags'
 import {
   Upload,
   Download,
-  FileJson,
   Trash2,
   Tag as TagIcon,
   Bookmark,
@@ -22,10 +21,8 @@ import {
   CheckCircle2,
   Sparkles,
   Palette,
-  Twitter,
 } from 'lucide-react'
 import { ThemeSelector } from '@/components/theme-selector'
-import { XConnect } from '@/components/x-connect'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { TagColor, TAG_COLORS } from '@/types'
@@ -202,26 +199,35 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          {/* X Account Integration */}
-          <Card className="p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <Twitter className="h-5 w-5 text-[#1DA1F2]" />
-              <h2 className="text-lg font-semibold">X Account Sync</h2>
-            </div>
-            <Suspense fallback={<Spinner className="h-4 w-4" />}>
-              <XConnect />
-            </Suspense>
-          </Card>
-
           {/* Import/Export */}
           <Card className="p-6">
             <h2 className="mb-4 text-lg font-semibold">Import & Export</h2>
             <div className="flex flex-col gap-4">
+              {/* X Data Export guide */}
+              <div className="rounded-lg border border-border bg-muted/40 p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  How to get your X bookmarks
+                </p>
+                <ol className="flex flex-col gap-2">
+                  {[
+                    <>On X, go to <strong>Settings → Your Account</strong></>,
+                    <>Tap <strong>Download an archive of your data</strong></>,
+                    <>Request the archive — X emails it within 24 hrs</>,
+                    <>Open the zip, find <code className="rounded bg-muted px-1 font-mono text-xs">data/bookmarks.js</code></>,
+                    <>Tap <strong>Import JSON</strong> below and select that file</>,
+                  ].map((step, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                        {i + 1}
+                      </span>
+                      <span className="leading-5 text-foreground">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
               {/* Import */}
               <div className="flex flex-col gap-2">
-                <p className="text-sm text-muted-foreground">
-                  Import bookmarks from X/Twitter export or BloomScroll backup
-                </p>
                 <div className="flex gap-2">
                   <input
                     ref={fileInputRef}
@@ -261,6 +267,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Demo data */}
+
               <div className="flex flex-col gap-2 border-t border-border pt-4">
                 <p className="text-sm text-muted-foreground">
                   Try BloomScroll with sample bookmarks

@@ -111,7 +111,8 @@ export function BloomScrollFeed() {
       <EmptyState
         icon={Layers}
         title="No bookmarks yet"
-        description="Import your X bookmarks from Settings to start browsing your knowledge feed."
+        description="Import your X bookmarks to start scrolling your knowledge feed."
+        showImportGuide
       />
     )
   }
