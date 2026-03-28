@@ -44,26 +44,23 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<AppTheme>('dark')
-
-  // Load saved theme on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) as AppTheme | null
-      if (saved && THEMES.some((t) => t.id === saved)) {
-        setThemeState(saved)
-        applyTheme(saved)
-      } else {
-        applyTheme('dark')
-      }
-    } catch {
-      applyTheme('dark')
+  // Read the class already applied by the inline ThemeInitScript so state
+  // matches the DOM from the very first render — no second paint needed.
+  const [theme, setThemeState] = useState<AppTheme>(() => {
+    if (typeof window === 'undefined') return 'dark'
+    const html = document.documentElement
+    for (const t of ['dark', 'light', 'sunny', 'moonshine'] as AppTheme[]) {
+      if (html.classList.contains(t)) return t
     }
-  }, [])
+    return 'dark'
+  })
 
   const setTheme = useCallback((newTheme: AppTheme) => {
     setThemeState(newTheme)
-    applyTheme(newTheme)
+    // Update the <html> class list
+    const html = document.documentElement
+    html.classList.remove('dark', 'light', 'sunny', 'moonshine')
+    html.classList.add(newTheme)
     try {
       localStorage.setItem(STORAGE_KEY, newTheme)
     } catch {
@@ -76,14 +73,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeContext.Provider>
   )
-}
-
-function applyTheme(theme: AppTheme) {
-  const html = document.documentElement
-  // Remove all theme classes
-  html.classList.remove('dark', 'light', 'sunny', 'moonshine')
-  // Apply the new theme class
-  html.classList.add(theme)
 }
 
 export function useTheme() {
