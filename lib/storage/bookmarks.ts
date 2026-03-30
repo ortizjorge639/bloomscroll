@@ -129,24 +129,32 @@ export async function removeTagFromBookmark(
 
 // Import multiple bookmarks
 export async function importBookmarks(
-  bookmarks: Array<Omit<Bookmark, 'id' | 'savedAt' | 'archived' | 'tags'>>
+  bookmarks: Array<Omit<Bookmark, 'id' | 'archived' | 'tags'>>
 ): Promise<{ imported: number; duplicates: number }> {
   const existing = await getAllFromStore<Bookmark>(STORES.BOOKMARKS)
   const existingUrls = new Set(existing.map((b) => b.url))
-  
+
   let imported = 0
   let duplicates = 0
-  
+
   for (const data of bookmarks) {
     if (existingUrls.has(data.url)) {
       duplicates++
       continue
     }
-    
-    await createBookmark(data)
+
+    const bookmark: Bookmark = {
+      ...data,
+      id: generateId(),
+      savedAt: data.savedAt ?? Date.now(),
+      archived: false,
+      tags: [],
+    }
+
+    await putItem(STORES.BOOKMARKS, bookmark)
     imported++
   }
-  
+
   return { imported, duplicates }
 }
 
