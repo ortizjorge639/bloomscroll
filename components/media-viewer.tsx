@@ -17,6 +17,14 @@ function upgradeImageUrl(url: string): string {
   return url.replace(/name=\w+/, 'name=large')
 }
 
+/** True if the URL or type indicates a static image (handles exporters that mis-label video thumbnails) */
+function isImageUrl(item: BookmarkMedia): boolean {
+  if (item.type === 'image') return true
+  // Video/gif type but URL is clearly a static image (e.g. amplify_video_thumb JPEG)
+  const url = item.url.toLowerCase().split('?')[0]
+  return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.webp')
+}
+
 export function MediaViewer({ items, initialIndex = 0, onClose }: MediaViewerProps) {
   const [index, setIndex] = useState(initialIndex)
 
@@ -71,7 +79,7 @@ export function MediaViewer({ items, initialIndex = 0, onClose }: MediaViewerPro
         className="relative flex max-h-[90vh] max-w-[92vw] items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        {item.type === 'image' ? (
+        {isImageUrl(item) ? (
           <img
             src={upgradeImageUrl(item.url)}
             alt={item.alt ?? 'Post image'}
@@ -80,7 +88,7 @@ export function MediaViewer({ items, initialIndex = 0, onClose }: MediaViewerPro
           />
         ) : (
           <video
-            key={item.url} // remount when switching items
+            key={item.url}
             src={item.url}
             className="max-h-[90vh] max-w-[92vw] rounded-xl shadow-2xl"
             controls={item.type === 'video'}

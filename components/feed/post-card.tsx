@@ -31,6 +31,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { MediaViewer } from '@/components/media-viewer'
+import { RichText } from '@/components/rich-text'
 
 const tagColorClasses: Record<TagColor, string> = {
   blue: 'bg-tag-blue/20 text-tag-blue',
@@ -121,11 +122,7 @@ export function PostCard({
   }
 
   const handleOpenExternal = () => {
-    if (onOpenBrowser) {
-      onOpenBrowser(bookmark.url)
-    } else {
-      window.open(bookmark.url, '_blank', 'noopener,noreferrer')
-    }
+    window.open(bookmark.url, '_blank', 'noopener,noreferrer')
   }
 
   const timeAgo = formatDistanceToNow(new Date(bookmark.savedAt), {
@@ -166,7 +163,7 @@ export function PostCard({
 
             {/* Text content */}
             <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl lg:text-2xl">
-              {bookmark.text}
+              <RichText text={bookmark.text} />
             </p>
 
             {/* Media */}
@@ -331,7 +328,7 @@ export function PostCard({
 
           {/* Text */}
           <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-foreground">
-            {bookmark.text}
+            <RichText text={bookmark.text} />
           </p>
 
           {/* Tags */}
@@ -416,7 +413,7 @@ export function PostCard({
           <span className="text-sm text-muted-foreground">{timeAgo}</span>
         </div>
 
-        <p className="text-sm leading-relaxed text-foreground">{bookmark.text}</p>
+        <p className="text-sm leading-relaxed text-foreground"><RichText text={bookmark.text} /></p>
 
         {/* Tags */}
         {bookmarkTags.length > 0 && (
@@ -520,7 +517,14 @@ function MediaThumb({
   compact?: boolean
   remainingOverlay?: number
 }) {
-  const isVideo = item.type === 'video' || item.type === 'gif'
+  const urlNoQuery = item.url.toLowerCase().split('?')[0]
+  const isStaticImage =
+    item.type === 'image' ||
+    urlNoQuery.endsWith('.jpg') ||
+    urlNoQuery.endsWith('.jpeg') ||
+    urlNoQuery.endsWith('.png') ||
+    urlNoQuery.endsWith('.webp')
+  const isVideo = !isStaticImage && (item.type === 'video' || item.type === 'gif')
   const height = compact ? 'h-full' : 'max-h-72'
 
   return (
@@ -546,6 +550,7 @@ function MediaThumb({
           alt={item.alt ?? 'Post media'}
           className={cn('w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]', height)}
           loading="lazy"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
       )}
 
