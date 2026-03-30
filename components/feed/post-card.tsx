@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Bookmark, TagColor } from '@/types'
+import { Bookmark, BookmarkMedia, TagColor } from '@/types'
 import { useData } from '@/lib/context/data-context'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
@@ -13,6 +13,8 @@ import {
   Tag as TagIcon,
   Trash2,
   X,
+  Play,
+  Images,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -28,6 +30,7 @@ import {
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { MediaViewer } from '@/components/media-viewer'
 
 const tagColorClasses: Record<TagColor, string> = {
   blue: 'bg-tag-blue/20 text-tag-blue',
@@ -73,6 +76,11 @@ export function PostCard({
     removeTagFromBookmark,
   } = useData()
   const [isTagging, setIsTagging] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
+
+  const media = bookmark.media?.filter((m) => m.url) ?? []
+  const openViewer = (index: number) => setViewerIndex(index)
+  const closeViewer = () => setViewerIndex(null)
 
   const bookmarkTags = tags.filter((t) => bookmark.tags.includes(t.id))
   const availableTags = tags.filter((t) => !bookmark.tags.includes(t.id))
@@ -126,6 +134,7 @@ export function PostCard({
 
   if (variant === 'feed') {
     return (
+      <>
       <article className="flex h-full w-full flex-col bg-card snap-card">
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 md:px-12 lg:px-20">
           {/* Content */}
@@ -161,16 +170,8 @@ export function PostCard({
             </p>
 
             {/* Media */}
-            {bookmark.media && bookmark.media.length > 0 && (
-              <div className="overflow-hidden rounded-xl">
-                {bookmark.media[0].type === 'image' && (
-                  <img
-                    src={bookmark.media[0].url}
-                    alt={bookmark.media[0].alt || 'Post image'}
-                    className="max-h-80 w-full object-cover"
-                  />
-                )}
-              </div>
+            {media.length > 0 && (
+              <MediaGrid items={media} onOpen={openViewer} />
             )}
 
             {/* Tags */}
@@ -296,21 +297,24 @@ export function PostCard({
           </DropdownMenu>
         </div>
       </article>
-    )
+
+      {/* Fullscreen media viewer */}
+      {viewerIndex !== null && media.length > 0 && (
+        <MediaViewer items={media} initialIndex={viewerIndex} onClose={closeViewer} />
+      )}
+    </>
+  )
   }
 
   // Compact variant (grid)
   if (variant === 'compact') {
     return (
+      <>
       <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/30">
         {/* Media */}
-        {bookmark.media && bookmark.media.length > 0 && (
-          <div className="aspect-video overflow-hidden">
-            <img
-              src={bookmark.media[0].url}
-              alt={bookmark.media[0].alt || 'Post image'}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
-            />
+        {media.length > 0 && (
+          <div className="aspect-video overflow-hidden bg-muted">
+            <MediaThumb item={media[0]} count={media.length} onOpen={() => openViewer(0)} compact />
           </div>
         )}
 
@@ -372,11 +376,17 @@ export function PostCard({
           </div>
         </div>
       </article>
+
+      {viewerIndex !== null && media.length > 0 && (
+        <MediaViewer items={media} initialIndex={viewerIndex} onClose={closeViewer} />
+      )}
+    </>
     )
   }
 
   // List variant
   return (
+    <>
     <article className="flex items-start gap-4 px-4 py-4 transition-colors hover:bg-muted/50">
       {/* Avatar */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -442,5 +452,126 @@ export function PostCard({
         </Button>
       </div>
     </article>
+
+    {viewerIndex !== null && media.length > 0 && (
+      <MediaViewer items={media} initialIndex={viewerIndex} onClose={closeViewer} />
+    )}
+  </>
+  )
+}
+
+// ─── Media helpers ────────────────────────────────────────────────────────────
+
+function MediaGrid({
+  items,
+  onOpen,
+}: {
+  items: BookmarkMedia[]
+  onOpen: (index: number) => void
+}) {
+  if (items.length === 1) {
+    return (
+      <div className="overflow-hidden rounded-xl">
+        <MediaThumb item={items[0]} count={1} onOpen={() => onOpen(0)} />
+      </div>
+    )
+  }
+
+  // 2-4 items: grid layout
+  return (
+    <div
+      className={cn(
+        'grid gap-1 overflow-hidden rounded-xl',
+        items.length === 2 && 'grid-cols-2',
+        items.length === 3 && 'grid-cols-2',
+        items.length >= 4 && 'grid-cols-2'
+      )}
+    >
+      {items.slice(0, 4).map((item, i) => (
+        <div
+          key={i}
+          className={cn(
+            'overflow-hidden',
+            items.length === 3 && i === 0 && 'row-span-2'
+          )}
+        >
+          <MediaThumb
+            item={item}
+            count={i === 3 && items.length > 4 ? items.length - 3 : 1}
+            onOpen={() => onOpen(i)}
+            remainingOverlay={i === 3 && items.length > 4 ? items.length - 3 : undefined}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MediaThumb({
+  item,
+  count,
+  onOpen,
+  compact,
+  remainingOverlay,
+}: {
+  item: BookmarkMedia
+  count: number
+  onOpen: () => void
+  compact?: boolean
+  remainingOverlay?: number
+}) {
+  const isVideo = item.type === 'video' || item.type === 'gif'
+  const height = compact ? 'h-full' : 'max-h-72'
+
+  return (
+    <div
+      className={cn('group relative w-full cursor-pointer', height)}
+      onClick={onOpen}
+      role="button"
+      aria-label="View media"
+    >
+      {isVideo ? (
+        <video
+          src={item.url}
+          className={cn('w-full object-cover', height)}
+          muted
+          loop
+          autoPlay={item.type === 'gif'}
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        <img
+          src={item.url}
+          alt={item.alt ?? 'Post media'}
+          className={cn('w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]', height)}
+          loading="lazy"
+        />
+      )}
+
+      {/* Overlay: play icon for video */}
+      {item.type === 'video' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/30">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60">
+            <Play className="h-5 w-5 fill-white text-white" />
+          </div>
+        </div>
+      )}
+
+      {/* Overlay: +N more */}
+      {remainingOverlay && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <span className="text-xl font-bold text-white">+{remainingOverlay}</span>
+        </div>
+      )}
+
+      {/* Multi-image indicator (top-right corner) */}
+      {count > 1 && !remainingOverlay && (
+        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+          <Images className="h-3 w-3" />
+          {count}
+        </div>
+      )}
+    </div>
   )
 }
