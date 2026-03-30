@@ -104,18 +104,54 @@ export async function importFromJSON(jsonContent: string): Promise<ImportResult>
         }))
       }
     } else if (data.bookmarks && Array.isArray(data.bookmarks)) {
-      // BloomScroll export format
-      bookmarksToImport = data.bookmarks.map((b: Partial<Bookmark>) => ({
-        url: b.url || '',
-        text: b.text || '',
-        author: b.author || { name: 'Unknown', handle: 'unknown' },
-        timestamp: b.timestamp || Date.now(),
-        media: b.media,
-      }))
-      
-      // Import tags if present
-      if (data.tags && Array.isArray(data.tags)) {
-        await tagStorage.importTags(data.tags)
+      const sample = data.bookmarks[0]
+
+      // Third-party exporter format (content.text, metadata.timestamp, author.avatarUrl)
+      if (sample?.content?.text !== undefined || sample?.metadata?.timestamp !== undefined) {
+        bookmarksToImport = data.bookmarks.map((b: {
+          url?: string
+          author?: { name?: string; handle?: string; avatarUrl?: string }
+          content?: { text?: string; media?: Array<{ type?: string; url?: string }> }
+          metadata?: { timestamp?: string }
+          bookmarkedAt?: string
+        }) => {
+          const media = (b.content?.media ?? [])
+            .filter((m) => m.url)
+            .map((m) => ({
+              type: (m.type === 'video' ? 'video' : m.type === 'gif' ? 'gif' : 'image') as 'image' | 'video' | 'gif',
+              url: m.url!,
+            }))
+
+          return {
+            url: b.url || '',
+            text: b.content?.text || '',
+            author: {
+              name: b.author?.name || 'Unknown',
+              handle: b.author?.handle || 'unknown',
+              avatar: b.author?.avatarUrl || undefined,
+            },
+            timestamp: b.metadata?.timestamp
+              ? new Date(b.metadata.timestamp).getTime()
+              : b.bookmarkedAt
+              ? new Date(b.bookmarkedAt).getTime()
+              : Date.now(),
+            media: media.length > 0 ? media : undefined,
+          }
+        })
+      } else {
+        // BloomScroll native export format
+        bookmarksToImport = data.bookmarks.map((b: Partial<Bookmark>) => ({
+          url: b.url || '',
+          text: b.text || '',
+          author: b.author || { name: 'Unknown', handle: 'unknown' },
+          timestamp: b.timestamp || Date.now(),
+          media: b.media,
+        }))
+
+        // Import tags if present
+        if (data.tags && Array.isArray(data.tags)) {
+          await tagStorage.importTags(data.tags)
+        }
       }
     } else {
       throw new Error('Unrecognized format')
