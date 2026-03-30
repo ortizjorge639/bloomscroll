@@ -128,16 +128,26 @@ export async function removeTagFromBookmark(
 }
 
 // Import multiple bookmarks
+// savedAt is derived from array position: index 0 = most recently bookmarked (highest savedAt).
+// This preserves the export order (which matches X's newest-first display order)
+// regardless of whether the source file has reliable timestamp fields.
 export async function importBookmarks(
-  bookmarks: Array<Omit<Bookmark, 'id' | 'archived' | 'tags'>>
+  bookmarks: Array<Omit<Bookmark, 'id' | 'savedAt' | 'archived' | 'tags'>>
 ): Promise<{ imported: number; duplicates: number }> {
   const existing = await getAllFromStore<Bookmark>(STORES.BOOKMARKS)
   const existingUrls = new Set(existing.map((b) => b.url))
 
+  // Base time for this import batch. Each subsequent bookmark gets 1s less
+  // so array order is strictly preserved in the feed (newest first = index 0).
+  const importBase = Date.now()
+
   let imported = 0
   let duplicates = 0
+  let position = 0 // tracks position among non-duplicate entries
 
-  for (const data of bookmarks) {
+  for (let i = 0; i < bookmarks.length; i++) {
+    const data = bookmarks[i]
+
     if (existingUrls.has(data.url)) {
       duplicates++
       continue
@@ -146,13 +156,15 @@ export async function importBookmarks(
     const bookmark: Bookmark = {
       ...data,
       id: generateId(),
-      savedAt: data.savedAt ?? Date.now(),
+      savedAt: importBase - position * 1000,
       archived: false,
       tags: [],
     }
 
     await putItem(STORES.BOOKMARKS, bookmark)
+    existingUrls.add(data.url)
     imported++
+    position++
   }
 
   return { imported, duplicates }

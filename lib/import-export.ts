@@ -133,9 +133,6 @@ export async function importFromJSON(jsonContent: string): Promise<ImportResult>
             timestamp: b.metadata?.timestamp
               ? new Date(b.metadata.timestamp).getTime()
               : Date.now(),
-            savedAt: b.bookmarkedAt
-              ? new Date(b.bookmarkedAt).getTime()
-              : Date.now(),
             media: media.length > 0 ? media : undefined,
           }
         })
