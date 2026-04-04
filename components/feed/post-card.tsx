@@ -15,6 +15,7 @@ import {
   X,
   Play,
   Images,
+  PanelRight,
 } from 'lucide-react'
 import {
   DropdownMenu,
