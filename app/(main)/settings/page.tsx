@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   Sparkles,
   Palette,
+  Server,
+  RefreshCw,
 } from 'lucide-react'
 import { ThemeSelector } from '@/components/theme-selector'
 import { toast } from 'sonner'
@@ -38,12 +40,15 @@ const tagColorClasses: Record<TagColor, string> = {
   pink: 'bg-tag-pink',
 }
 
+const API_URL = process.env.NEXT_PUBLIC_BOOKMARKS_API_URL ?? ''
+
 export default function SettingsPage() {
   const { tags, bookmarks, archivedBookmarks, refreshData, deleteTag, updateTag } = useData()
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isLoadingDemo, setIsLoadingDemo] = useState(false)
   const [isDeletingAll, setIsDeletingAll] = useState(false)
+  const [isSyncingApi, setIsSyncingApi] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const totalBookmarks = bookmarks.length + archivedBookmarks.length
@@ -74,6 +79,29 @@ export default function SettingsPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+    }
+  }
+
+  const handleApiSync = async () => {
+    if (!API_URL) {
+      toast.error('NEXT_PUBLIC_BOOKMARKS_API_URL is not set')
+      return
+    }
+    setIsSyncingApi(true)
+    try {
+      const res = await fetch(`${API_URL}/bookmarks`)
+      if (!res.ok) throw new Error(`API returned ${res.status}`)
+      const json = await res.text()
+      const result = await importFromJSON(json)
+      await refreshData()
+      toast.success(
+        `Synced ${result.imported} bookmark${result.imported !== 1 ? 's' : ''}` +
+        (result.duplicates > 0 ? ` · ${result.duplicates} already existed` : '')
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Sync failed')
+    } finally {
+      setIsSyncingApi(false)
     }
   }
 
@@ -198,6 +226,35 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+
+          {/* VM API Sync */}
+          {API_URL && (
+            <Card className="p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <Server className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Auto Sync</h2>
+                <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-500">
+                  Live
+                </span>
+              </div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Pull the latest bookmarks from your sync server. Refreshes automatically every 6 hours.
+              </p>
+              <Button
+                variant="default"
+                className="gap-2"
+                onClick={handleApiSync}
+                disabled={isSyncingApi}
+              >
+                {isSyncingApi ? (
+                  <Spinner className="h-4 w-4" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                {isSyncingApi ? 'Syncing…' : 'Sync Now'}
+              </Button>
+            </Card>
+          )}
 
           {/* Import/Export */}
           <Card className="p-6">
