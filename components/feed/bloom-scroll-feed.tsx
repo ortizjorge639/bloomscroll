@@ -6,14 +6,17 @@ import { PostCard } from '@/components/feed/post-card'
 import { EmptyState } from '@/components/empty-state'
 import { Spinner } from '@/components/ui/spinner'
 import { PopupBrowser } from '@/components/browser/popup-browser'
+import { SidePeek } from '@/components/side-peek'
 import { ChevronUp, ChevronDown, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Bookmark } from '@/types'
 
 export function BloomScrollFeed() {
   const { filteredBookmarks, isLoading } = useData()
   const containerRef = useRef<HTMLDivElement>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [browserUrl, setBrowserUrl] = useState<string | null>(null)
+  const [peekBookmark, setPeekBookmark] = useState<Bookmark | null>(null)
 
   // Scroll to specific index
   const scrollToIndex = useCallback((index: number) => {
@@ -132,6 +135,7 @@ export function BloomScrollFeed() {
               bookmark={bookmark}
               variant="feed"
               onOpenBrowser={handleOpenBrowser}
+              onPeek={setPeekBookmark}
             />
           </div>
         ))}
@@ -177,6 +181,9 @@ export function BloomScrollFeed() {
 
       {/* Popup Browser */}
       <PopupBrowser url={browserUrl} onClose={handleCloseBrowser} />
+
+      {/* Side Peek */}
+      <SidePeek bookmark={peekBookmark} onClose={() => setPeekBookmark(null)} />
     </>
   )
 }

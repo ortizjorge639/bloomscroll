@@ -112,7 +112,7 @@ export async function importFromJSON(jsonContent: string): Promise<ImportResult>
           url?: string
           author?: { name?: string; handle?: string; avatarUrl?: string }
           content?: { text?: string; media?: Array<{ type?: string; url?: string }> }
-          metadata?: { timestamp?: string }
+          metadata?: { timestamp?: string; likes?: number; retweets?: number; replies?: number }
           bookmarkedAt?: string
         }) => {
           const media = (b.content?.media ?? [])
@@ -121,6 +121,14 @@ export async function importFromJSON(jsonContent: string): Promise<ImportResult>
               type: (m.type === 'video' ? 'video' : m.type === 'gif' ? 'gif' : 'image') as 'image' | 'video' | 'gif',
               url: m.url!,
             }))
+
+          const metrics = b.metadata
+            ? {
+                likes: b.metadata.likes,
+                retweets: b.metadata.retweets,
+                replies: b.metadata.replies,
+              }
+            : undefined
 
           return {
             url: b.url || '',
@@ -134,6 +142,7 @@ export async function importFromJSON(jsonContent: string): Promise<ImportResult>
               ? new Date(b.metadata.timestamp).getTime()
               : Date.now(),
             media: media.length > 0 ? media : undefined,
+            metrics,
           }
         })
       } else {
