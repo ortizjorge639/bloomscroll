@@ -60,6 +60,7 @@ interface PostCardProps {
   variant?: 'feed' | 'compact' | 'list'
   showUnarchive?: boolean
   onOpenBrowser?: (url: string) => void
+  onPeek?: (bookmark: Bookmark) => void
 }
 
 export function PostCard({
@@ -67,6 +68,7 @@ export function PostCard({
   variant = 'feed',
   showUnarchive = false,
   onOpenBrowser,
+  onPeek,
 }: PostCardProps) {
   const {
     tags,
@@ -144,6 +146,8 @@ export function PostCard({
                     src={bookmark.author.avatar}
                     alt={bookmark.author.name}
                     className="h-full w-full rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 ) : (
                   <span className="text-sm font-medium">
@@ -263,6 +267,13 @@ export function PostCard({
             <Button variant="ghost" size="sm" className="gap-2" onClick={handleArchive}>
               <Archive className="h-4 w-4" />
               Archive
+            </Button>
+          )}
+
+          {onPeek && (
+            <Button variant="ghost" size="sm" className="gap-2" onClick={() => onPeek(bookmark)}>
+              <PanelRight className="h-4 w-4" />
+              Expand
             </Button>
           )}
 
@@ -392,6 +403,8 @@ export function PostCard({
             src={bookmark.author.avatar}
             alt={bookmark.author.name}
             className="h-full w-full rounded-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
         ) : (
           <span className="text-sm font-medium">

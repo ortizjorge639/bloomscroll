@@ -12,6 +12,11 @@ export interface Bookmark {
   timestamp: number
   savedAt: number
   media?: BookmarkMedia[]
+  metrics?: {
+    likes?: number
+    retweets?: number
+    replies?: number
+  }
   archived: boolean
   tags: string[]
 }
