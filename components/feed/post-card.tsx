@@ -15,7 +15,6 @@ import {
   X,
   Play,
   Images,
-  PanelRight,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -564,7 +563,6 @@ function MediaThumb({
           alt={item.alt ?? 'Post media'}
           className={cn('w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]', height)}
           loading="lazy"
-          referrerPolicy="no-referrer"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
       )}
