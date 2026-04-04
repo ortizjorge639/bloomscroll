@@ -6,7 +6,7 @@ import { PostCard } from '@/components/feed/post-card'
 import { EmptyState } from '@/components/empty-state'
 import { Spinner } from '@/components/ui/spinner'
 import { PopupBrowser } from '@/components/browser/popup-browser'
-import { SidePeek } from '@/components/side-peek'
+import { SidePeekPanel, SidePeekSheet } from '@/components/side-peek'
 import { ChevronUp, ChevronDown, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Bookmark } from '@/types'
@@ -121,12 +121,13 @@ export function BloomScrollFeed() {
   }
 
   return (
-    <>
+    <div className="relative flex flex-1 overflow-hidden">
+      {/* Scroll container */}
       <div
         ref={containerRef}
-        className="relative flex-1 overflow-y-auto snap-feed hide-scrollbar"
+        className="flex-1 overflow-y-auto snap-feed hide-scrollbar"
       >
-        {filteredBookmarks.map((bookmark, index) => (
+        {filteredBookmarks.map((bookmark) => (
           <div
             key={bookmark.id}
             className="h-full min-h-full w-full snap-card"
@@ -141,14 +142,14 @@ export function BloomScrollFeed() {
         ))}
       </div>
 
+      {/* Desktop side panel — inline flex sibling, no fixed/portal needed */}
+      <SidePeekPanel bookmark={peekBookmark} onClose={() => setPeekBookmark(null)} />
+
       {/* Navigation indicators */}
       <div className="absolute bottom-20 right-4 flex flex-col items-center gap-2 md:bottom-6 md:right-6">
-        {/* Progress */}
         <div className="rounded-full bg-card/80 px-2.5 py-1 text-[10px] font-medium text-muted-foreground backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
           {currentIndex + 1} / {filteredBookmarks.length}
         </div>
-
-        {/* Navigation buttons - hidden on mobile, use swipe instead */}
         <div className="hidden flex-col gap-1 md:flex">
           <button
             onClick={() => scrollToIndex(currentIndex - 1)}
@@ -182,8 +183,8 @@ export function BloomScrollFeed() {
       {/* Popup Browser */}
       <PopupBrowser url={browserUrl} onClose={handleCloseBrowser} />
 
-      {/* Side Peek */}
-      <SidePeek bookmark={peekBookmark} onClose={() => setPeekBookmark(null)} />
-    </>
+      {/* Mobile bottom sheet — portal to document.body */}
+      <SidePeekSheet bookmark={peekBookmark} onClose={() => setPeekBookmark(null)} />
+    </div>
   )
 }
