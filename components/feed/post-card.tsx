@@ -133,7 +133,7 @@ export function PostCard({
     return (
       <>
       <article className="flex h-full w-full flex-col bg-card snap-card">
-        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 md:px-12 lg:px-20">
+        <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-[10vh] sm:px-6 md:px-12 lg:px-20">
           {/* Content */}
           <div className="flex w-full max-w-2xl flex-col gap-4 sm:gap-6">
             {/* Author */}
