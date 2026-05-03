@@ -170,6 +170,18 @@ export async function importBookmarks(
   return { imported, duplicates }
 }
 
+// Mark bookmark as read
+export async function markBookmarkAsRead(id: string): Promise<boolean> {
+  const result = await updateBookmark(id, { read: true })
+  return result !== null
+}
+
+// Mark bookmark as unread
+export async function markBookmarkAsUnread(id: string): Promise<boolean> {
+  const result = await updateBookmark(id, { read: false })
+  return result !== null
+}
+
 // Export all bookmarks
 export async function exportBookmarks(): Promise<Bookmark[]> {
   return getAllFromStore<Bookmark>(STORES.BOOKMARKS)

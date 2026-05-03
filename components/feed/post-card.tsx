@@ -16,6 +16,8 @@ import {
   Play,
   Images,
   PanelRight,
+  CheckCheck,
+  RotateCcw,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -78,6 +80,8 @@ export function PostCard({
     deleteBookmark,
     addTagToBookmark,
     removeTagFromBookmark,
+    markAsRead,
+    markAsUnread,
   } = useData()
   const [isTagging, setIsTagging] = useState(false)
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
@@ -126,6 +130,14 @@ export function PostCard({
 
   const handleOpenExternal = () => {
     window.open(bookmark.url, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleMarkRead = async () => {
+    if (bookmark.read) {
+      await markAsUnread(bookmark.id)
+    } else {
+      await markAsRead(bookmark.id)
+    }
   }
 
   const timeAgo = formatDistanceToNow(new Date(bookmark.savedAt), {
@@ -258,6 +270,19 @@ export function PostCard({
               </div>
             </PopoverContent>
           </Popover>
+
+          <Button
+            variant={bookmark.read ? 'secondary' : 'ghost'}
+            size="sm"
+            className="gap-2"
+            onClick={handleMarkRead}
+          >
+            {bookmark.read ? (
+              <><RotateCcw className="h-4 w-4" />Unread</>
+            ) : (
+              <><CheckCheck className="h-4 w-4" />Read</>
+            )}
+          </Button>
 
           {showUnarchive ? (
             <Button variant="ghost" size="sm" className="gap-2" onClick={handleUnarchive}>

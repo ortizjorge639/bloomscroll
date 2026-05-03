@@ -18,6 +18,7 @@ export interface Bookmark {
     replies?: number
   }
   archived: boolean
+  read?: boolean
   tags: string[]
 }
 

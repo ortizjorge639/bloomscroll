@@ -7,12 +7,13 @@ import { EmptyState } from '@/components/empty-state'
 import { Spinner } from '@/components/ui/spinner'
 import { PopupBrowser } from '@/components/browser/popup-browser'
 import { SidePeekPanel, SidePeekSheet } from '@/components/side-peek'
-import { ChevronUp, ChevronDown, Layers } from 'lucide-react'
+import { ChevronUp, ChevronDown, Layers, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Bookmark } from '@/types'
+import type { ReadFilter } from '@/lib/context/data-context'
 
 export function BloomScrollFeed() {
-  const { filteredBookmarks, isLoading } = useData()
+  const { filteredBookmarks, isLoading, readFilter, setReadFilter, unreadCount } = useData()
   const containerRef = useRef<HTMLDivElement>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [browserUrl, setBrowserUrl] = useState<string | null>(null)
@@ -109,19 +110,36 @@ export function BloomScrollFeed() {
     )
   }
 
+  if (filteredBookmarks.length === 0 && readFilter === 'unread') {
+    return (
+      <div className="flex flex-col h-full">
+        <ReadFilterTabs readFilter={readFilter} setReadFilter={setReadFilter} unreadCount={unreadCount} />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
+          <Sparkles className="h-10 w-10 text-muted-foreground opacity-40" />
+          <p className="text-lg font-medium text-foreground">You're caught up 🌸</p>
+          <p className="text-sm text-muted-foreground">No unread bookmarks. Switch to All to browse everything.</p>
+        </div>
+      </div>
+    )
+  }
+
   if (filteredBookmarks.length === 0) {
     return (
-      <EmptyState
-        icon={Layers}
-        title="No bookmarks yet"
-        description="Import your X bookmarks to start scrolling your knowledge feed."
-        showImportGuide
-      />
+      <div className="flex flex-col h-full">
+        <ReadFilterTabs readFilter={readFilter} setReadFilter={setReadFilter} unreadCount={unreadCount} />
+        <EmptyState
+          icon={Layers}
+          title="No bookmarks yet"
+          description="Import your X bookmarks to start scrolling your knowledge feed."
+          showImportGuide
+        />
+      </div>
     )
   }
 
   return (
-    <div className="relative flex flex-1 overflow-hidden">
+    <div className="relative flex flex-1 flex-col overflow-hidden">
+      <ReadFilterTabs readFilter={readFilter} setReadFilter={setReadFilter} unreadCount={unreadCount} />
       {/* Scroll container */}
       <div
         ref={containerRef}
@@ -185,6 +203,53 @@ export function BloomScrollFeed() {
 
       {/* Mobile bottom sheet — portal to document.body */}
       <SidePeekSheet bookmark={peekBookmark} onClose={() => setPeekBookmark(null)} />
+    </div>
+  )
+}
+
+function ReadFilterTabs({
+  readFilter,
+  setReadFilter,
+  unreadCount,
+}: {
+  readFilter: ReadFilter
+  setReadFilter: (f: ReadFilter) => void
+  unreadCount: number
+}) {
+  const tabs: { key: ReadFilter; label: string; count?: number }[] = [
+    { key: 'unread', label: 'Unread', count: unreadCount },
+    { key: 'all', label: 'All' },
+    { key: 'read', label: 'Read' },
+  ]
+
+  return (
+    <div className="flex shrink-0 items-center gap-1 border-b border-border bg-background px-3 py-2 md:px-4">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          onClick={() => setReadFilter(tab.key)}
+          className={cn(
+            'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+            readFilter === tab.key
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
+        >
+          {tab.label}
+          {tab.count !== undefined && tab.count > 0 && (
+            <span
+              className={cn(
+                'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                readFilter === tab.key
+                  ? 'bg-primary-foreground/20 text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              )}
+            >
+              {tab.count}
+            </span>
+          )}
+        </button>
+      ))}
     </div>
   )
 }

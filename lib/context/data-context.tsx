@@ -15,6 +15,7 @@ import { openDB } from '@/lib/db'
 import { MOCK_BOOKMARKS, MOCK_TAGS } from '@/lib/mock-data'
 
 export type SortOrder = 'newest' | 'oldest'
+export type ReadFilter = 'all' | 'unread' | 'read'
 
 interface DataContextValue {
   // Bookmarks
@@ -31,6 +32,8 @@ interface DataContextValue {
   deleteBookmark: (id: string) => Promise<void>
   addTagToBookmark: (bookmarkId: string, tagId: string) => Promise<void>
   removeTagFromBookmark: (bookmarkId: string, tagId: string) => Promise<void>
+  markAsRead: (id: string) => Promise<void>
+  markAsUnread: (id: string) => Promise<void>
 
   // Tags
   tags: Tag[]
@@ -42,6 +45,9 @@ interface DataContextValue {
   activeTagFilters: string[]
   setActiveTagFilters: (tagIds: string[]) => void
   filteredBookmarks: Bookmark[]
+  readFilter: ReadFilter
+  setReadFilter: (filter: ReadFilter) => void
+  unreadCount: number
 
   // Search
   searchQuery: string
@@ -65,6 +71,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [activeTagFilters, setActiveTagFilters] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
+  const [readFilter, setReadFilter] = useState<ReadFilter>('unread')
   
   // Load data from IndexedDB
   const refreshData = useCallback(async () => {
@@ -204,6 +211,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     []
   )
   
+  const markAsRead = async (id: string) => {
+    await bookmarkStorage.markBookmarkAsRead(id)
+    setBookmarks((prev) => prev.map((b) => (b.id === id ? { ...b, read: true } : b)))
+  }
+
+  const markAsUnread = async (id: string) => {
+    await bookmarkStorage.markBookmarkAsUnread(id)
+    setBookmarks((prev) => prev.map((b) => (b.id === id ? { ...b, read: false } : b)))
+  }
+
   // Tag actions
   const createTag = useCallback(async (name: string, color?: TagColor) => {
     const tag = await tagStorage.createTag(name, color)
@@ -239,30 +256,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     )
   }, [])
   
-  // Apply sort, tag filters, and text search
+  // Apply sort, tag filters, text search, and read filter
   const filteredBookmarks = (() => {
-    // 1. Sort
     const sorted = [...bookmarks].sort((a, b) =>
       sortOrder === 'newest' ? b.savedAt - a.savedAt : a.savedAt - b.savedAt
     )
-
-    // 2. Tag filter (AND logic — must have all selected tags)
     const tagFiltered =
       activeTagFilters.length > 0
         ? sorted.filter((b) => activeTagFilters.every((tagId) => b.tags.includes(tagId)))
         : sorted
-
-    // 3. Text search (case-insensitive, searches text + author name/handle)
-    if (!searchQuery.trim()) return tagFiltered
-    const q = searchQuery.toLowerCase()
-    return tagFiltered.filter(
-      (b) =>
-        b.text.toLowerCase().includes(q) ||
-        b.author.name.toLowerCase().includes(q) ||
-        b.author.handle.toLowerCase().includes(q) ||
-        b.url.toLowerCase().includes(q)
-    )
+    const searched = !searchQuery.trim()
+      ? tagFiltered
+      : tagFiltered.filter((b) => {
+          const q = searchQuery.toLowerCase()
+          return (
+            b.text.toLowerCase().includes(q) ||
+            b.author.name.toLowerCase().includes(q) ||
+            b.author.handle.toLowerCase().includes(q) ||
+            b.url.toLowerCase().includes(q)
+          )
+        })
+    if (readFilter === 'unread') return searched.filter((b) => !b.read)
+    if (readFilter === 'read') return searched.filter((b) => b.read)
+    return searched
   })()
+
+  const unreadCount = bookmarks.filter((b) => !b.read).length
   
   const value: DataContextValue = {
     bookmarks,
@@ -274,6 +293,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteBookmark,
     addTagToBookmark,
     removeTagFromBookmark,
+    markAsRead,
+    markAsUnread,
     tags,
     createTag,
     updateTag,
@@ -281,6 +302,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     activeTagFilters,
     setActiveTagFilters,
     filteredBookmarks,
+    readFilter,
+    setReadFilter,
+    unreadCount,
     searchQuery,
     setSearchQuery,
     sortOrder,
